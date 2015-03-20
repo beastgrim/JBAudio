@@ -9,12 +9,15 @@
 #import "JBAudioPlayer.h"
 #import <AVFoundation/AVFoundation.h>
 
-@interface JBAudioPlayer () <AVAudioPlayerDelegate> {
-    AVAudioPlayer           *player;
-}
+@interface JBAudioPlayer () <AVAudioPlayerDelegate>
+
+@property (nonatomic, strong) AVAudioPlayer           * player;
+
 @end
 
 @implementation JBAudioPlayer
+
+@synthesize player;
 
 @synthesize delegate;
 @synthesize queue;
@@ -24,14 +27,22 @@
 {
     self = [super init];
     queue = [[NSMutableArray alloc] init];
-//    self addObserver:queue forKeyPath:arr options:<#(NSKeyValueObservingOptions)#> context:<#(void *)#>
+    speed = 1;
+    
+    AVAudioSession *audioSession = [AVAudioSession sharedInstance];
+    [audioSession setCategory:AVAudioSessionCategoryPlayAndRecord error:NULL];
+    
     return self;
 }
 
 - (void)playFileAtPath:(NSString *)path
 {
-//    NSURL *fileURL = [[NSURL alloc] initFileURLWithPath: path];
-    NSData *data = [[NSData alloc] initWithContentsOfFile:path];
+    NSURL *fileURL = [[NSURL alloc] initFileURLWithPath:path];
+    NSData * data = [[NSData alloc] initWithContentsOfURL:fileURL];
+    if (!data) {
+        NSLog(@"Error playFileAtPath data = nil");
+        return;
+    }
     [queue addObject:data];
     
     if (queue.count == 1) {
@@ -52,6 +63,7 @@
 {
     if (!queue || !queue.count) {
         [self.delegate audioPlayerDidFinishPlaying:self];
+//        NSLog(@"Error playNextAudio, no queue");
         return;
     }
     
@@ -61,7 +73,8 @@
 
     NSError *err;
     player = [[AVAudioPlayer alloc] initWithData:[queue firstObject] error:&err];
-
+    player.delegate = self;
+    
     if (err) {
         NSLog(@"Error init file");
     } else {
@@ -84,10 +97,15 @@
 {
     
 }
+
 -(void)audioPlayerDidFinishPlaying:(AVAudioPlayer *)player successfully:(BOOL)flag
 {
 //    NSLog(@"audioPlayerDidFinishPlaying %d", flag);
     [queue removeObjectAtIndex:0];
     [self playNextAudio];
 }
+- (void)audioPlayerDecodeErrorDidOccur:(AVAudioPlayer *)player error:(NSError *)error {
+    NSLog(@"audioPlayerDecodeErrorDidOccur %@", error);
+}
+
 @end

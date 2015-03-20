@@ -19,8 +19,8 @@
 
 @property (nonatomic, weak) id<JBAudioPlayerDelegate> delegate;
 
-@property (atomic, retain) NSMutableArray *queue;
-@property (nonatomic) float                speed;
+@property (atomic, retain) NSMutableArray * queue;
+@property (nonatomic) float                 speed;
 
 - (void)playFileAtPath:(NSString*)path;
 - (void)playFileFromData:(NSData *)data;

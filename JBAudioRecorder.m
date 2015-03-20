@@ -9,8 +9,8 @@
 #import "JBAudioRecorder.h"
 #import <AVFoundation/AVFoundation.h>
 
-#define kDefaultRecordsPath     @"/records"
-#define kDefaultRecordFileName  @"/record"
+#define kDefaultRecordsPath     @"records/"
+#define kDefaultRecordFileName  @"record.wav"
 
 
 @interface JBAudioRecorder () <AVAudioRecorderDelegate> {
@@ -20,11 +20,15 @@
 }
 
 @end
-@implementation JBAudioRecorder
+@implementation JBAudioRecorder {
+    JBAudioRecorderCallback     _callback;
+}
 
 - (instancetype)init
 {
     self = [super init];
+
+    _defaultUrl = [[self applicationDocumentsDirectory] URLByAppendingPathComponent:kDefaultRecordsPath];
 
     [recorder setDelegate:self];
 
@@ -34,20 +38,15 @@
     return self;
 }
 
-- (void)setAutoPauseRecord:(BOOL)autoPauseRecord
-{
-    NSLog(@"setAutoPauseRecord");
-    _autoPauseRecord = autoPauseRecord;
-}
-
 - (void)startRecordAtPath:(NSString *)path
 {
     NSURL *url;
     if (!path) {
-        url = [[[self applicationDocumentsDirectory] URLByAppendingPathComponent:kDefaultRecordsPath] URLByAppendingPathComponent:kDefaultRecordFileName];
+        url = [_defaultUrl URLByAppendingPathComponent:kDefaultRecordFileName];
     } else {
         url = [NSURL fileURLWithPath:path];
     }
+    [[NSFileManager defaultManager] createDirectoryAtURL:[[self applicationDocumentsDirectory] URLByAppendingPathComponent:kDefaultRecordsPath] withIntermediateDirectories:YES attributes:nil error:nil];
     
     AVAudioSession *audioSession = [AVAudioSession sharedInstance];
     NSError *err;
@@ -74,14 +73,15 @@
     [settings setValue: [NSNumber numberWithBool:NO] forKey:AVLinearPCMIsFloatKey];
     [settings setValue:  [NSNumber numberWithInt: AVAudioQualityMin] forKey:AVEncoderAudioQualityKey];
     
-    NSString *pathToSave;
-    if (path) {
-        pathToSave = path;
-    } else {
-        pathToSave = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject] stringByAppendingString:@"/tempRecord.wav"];
-
-    }
-    _writePath = url.path;
+//    NSString *pathToSave;
+//    if (path) {
+//        pathToSave = path;
+//    } else {
+//        pathToSave = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject] stringByAppendingString:@"/tempRecord.wav"];
+//
+//    }
+//    _writePath = url.path;
+//    NSLog(@"write path %@", _writePath);
     
     mayStop = NO;
     // Create recorder
@@ -97,6 +97,15 @@
         [recorder setMeteringEnabled:YES];
         updatePowerSignal = [NSTimer scheduledTimerWithTimeInterval:.5 target:self selector:@selector(updatePowerSignal:) userInfo:nil repeats:YES];
     }
+}
+
+- (void)startRecordAtPath:(NSString *)path autoCompletion:(void (^)(NSURL *))completion {
+    
+    self.autoPauseRecord = YES;
+    self.autoStartRecord = NO;
+    _callback = completion;
+    
+    [self startRecordAtPath:path];
 }
 
 - (void)updatePowerSignal:(NSTimer*)timer
@@ -117,6 +126,9 @@
         } else if (_autoPauseRecord && ! _autoStartRecord && mayStop) {
             [self stopRecord];
             [self.delegate audioRecorderDidAutoStopRecord:self];
+            if (_callback) {
+                _callback(recorder.url);
+            }
         }
             
     } else if (power >_threshold && recorder.recording) {

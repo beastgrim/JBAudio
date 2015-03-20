@@ -20,12 +20,16 @@
 
 @property (nonatomic, assign)   id<JBAudioRecorderDelegate> delegate;
 
-@property (nonatomic, retain)   NSString        *writePath;
+typedef void (^JBAudioRecorderCallback)(NSURL * completion);
+
+@property (nonatomic, readonly) NSURL       *   defaultUrl;
+
 @property (nonatomic)           float           threshold;
 @property (nonatomic)           BOOL            autoPauseRecord;
 @property (nonatomic)           BOOL            autoStartRecord;
 
 - (void)startRecordAtPath:(NSString*)path;
+- (void)startRecordAtPath:(NSString*)path autoCompletion:(void(^) (NSURL * url))completion;
 - (NSURL*)stopRecord;
 
 @end

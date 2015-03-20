@@ -11,13 +11,13 @@
 
 @implementation JBFlacSupport
 
-- (NSString*) wavToFlac:(NSString*)wavPath
++ (NSURL*) wavToFlac:(NSURL *)wavPath
 {
-    NSString *appDir = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
-    NSString* writePath = [appDir stringByAppendingFormat:@"/tempFlac"];
+    NSURL * appDir = [self applicationDocumentsDirectory];
+    NSURL * writeURL = [appDir URLByAppendingPathComponent:@"temp"];
     
-    NSString *flacFileWithoutExtension = writePath;
-    NSString *waveFile = wavPath;
+    NSString *flacFileWithoutExtension = writeURL.path;
+    NSString *waveFile = wavPath.path;
     
     int interval_seconds = 0;
     char** flac_files = (char**) malloc(sizeof(char*) * 1024);
@@ -27,7 +27,14 @@
     if (conversionResult) {
         return nil;
     }
-    return [writePath stringByAppendingString:@".flac"];
+    
+    return [writeURL URLByAppendingPathExtension:@"flac"];
+}
+
+#pragma mark - Utils
++ (NSURL *)applicationDocumentsDirectory {
+    // The directory the application uses to store the Core Data store file. This code uses a directory named "FM.CoreData" in the application's documents directory.
+    return [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
 }
 
 @end

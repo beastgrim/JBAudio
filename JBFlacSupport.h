@@ -10,4 +10,6 @@
 
 @interface JBFlacSupport : NSObject
 
++ (NSURL *) wavToFlac:(NSURL *)wavPath;
+
 @end
