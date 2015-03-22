@@ -83,7 +83,7 @@
             player.enableRate = YES;
             [player setRate:speed];
             [player play];
-            NSLog(@"JBAudioPleyer play data %ld", [queue.firstObject length]);
+            NSLog(@"JBAudioPlayer play data %ld", [queue.firstObject length]);
         } else {
             NSLog(@"Error play file");
             [queue removeObjectAtIndex:0];
