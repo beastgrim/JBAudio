@@ -28,8 +28,14 @@ typedef void (^JBAudioRecorderCallback)(NSURL * completion);
 @property (nonatomic)           BOOL            autoPauseRecord;
 @property (nonatomic)           BOOL            autoStartRecord;
 
-- (void)startRecordAtPath:(NSString*)path;
-- (void)startRecordAtPath:(NSString*)path autoCompletion:(void(^) (NSURL * url))completion;
-- (NSURL*)stopRecord;
+
+- (NSTimeInterval) currentTime;
+- (float) signalPower;
+- (void) startRecordAtPath:(NSString*)path;
+- (void) startRecordAtPath:(NSString*)path autoCompletion:(void(^) (NSURL * url))completion;
+
+- (void) continueRecordAtPath:(NSString*)path;
+
+- (NSURL*) stopRecord;
 
 @end

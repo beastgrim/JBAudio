@@ -35,6 +35,7 @@
     return self;
 }
 
+#pragma mark - Base
 - (void)playFileAtPath:(NSString *)path
 {
     NSURL *fileURL = [[NSURL alloc] initFileURLWithPath:path];
@@ -59,6 +60,20 @@
     }
 }
 
+- (NSTimeInterval)pause {
+    [player pause];
+    return player.currentTime;
+}
+
+- (void)playAtTime:(NSTimeInterval)time {
+    [player playAtTime:time];
+}
+- (NSTimeInterval) currentTime {
+    return player.currentTime;
+}
+- (NSTimeInterval) duration {
+    return player.duration;
+}
 - (void)playNextAudio
 {
     if (!queue || !queue.count) {

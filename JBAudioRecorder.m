@@ -10,7 +10,7 @@
 #import <AVFoundation/AVFoundation.h>
 
 #define kDefaultRecordsPath     @"records/"
-#define kDefaultRecordFileName  @"record.wav"
+#define kDefaultRecordFileName  @"record.m4a"
 
 
 @interface JBAudioRecorder () <AVAudioRecorderDelegate> {
@@ -57,21 +57,26 @@
     }
     
     //Force current audio out through speaker
-    UInt32 routeSpeaker = kAudioSessionOverrideAudioRoute_Speaker;
-    AudioSessionSetProperty(kAudioSessionProperty_OverrideCategoryDefaultToSpeaker, sizeof(routeSpeaker), &routeSpeaker);
+//    UInt32 routeSpeaker = kAudioSessionOverrideAudioRoute_Speaker;
+//    AudioSessionSetProperty(kAudioSessionProperty_OverrideCategoryDefaultToSpeaker, sizeof(routeSpeaker), &routeSpeaker);
 
     NSError *error;
     
-    // Recording settings
-    NSMutableDictionary *settings = [NSMutableDictionary dictionary];
-    
-    [settings setValue: [NSNumber numberWithInt:kAudioFormatLinearPCM] forKey:AVFormatIDKey];
-    [settings setValue: [NSNumber numberWithFloat:8000.0] forKey:AVSampleRateKey];
-    [settings setValue: [NSNumber numberWithInt: 1] forKey:AVNumberOfChannelsKey];
-    [settings setValue: [NSNumber numberWithInt:16] forKey:AVLinearPCMBitDepthKey];
-    [settings setValue: [NSNumber numberWithBool:NO] forKey:AVLinearPCMIsBigEndianKey];
-    [settings setValue: [NSNumber numberWithBool:NO] forKey:AVLinearPCMIsFloatKey];
-    [settings setValue:  [NSNumber numberWithInt: AVAudioQualityMin] forKey:AVEncoderAudioQualityKey];
+    // Recording wav settings
+//    NSMutableDictionary *settings = [NSMutableDictionary dictionary];
+//    [settings setValue: [NSNumber numberWithInt:kAudioFormatMPEG4AAC] forKey:AVFormatIDKey];
+//    [settings setValue: [NSNumber numberWithFloat:8000.0] forKey:AVSampleRateKey];
+//    [settings setValue: [NSNumber numberWithInt: 1] forKey:AVNumberOfChannelsKey];
+//    [settings setValue: [NSNumber numberWithInt:16] forKey:AVLinearPCMBitDepthKey];
+//    [settings setValue: [NSNumber numberWithBool:NO] forKey:AVLinearPCMIsBigEndianKey];
+//    [settings setValue: [NSNumber numberWithBool:NO] forKey:AVLinearPCMIsFloatKey];
+//    [settings setValue: [NSNumber numberWithInt: AVAudioQualityMin] forKey:AVEncoderAudioQualityKey];
+    // Recording m4a settings
+    NSDictionary *recordSettings = [NSDictionary dictionaryWithObjectsAndKeys:
+                                    [NSNumber numberWithInt: kAudioFormatMPEG4AAC], AVFormatIDKey,
+                                    [NSNumber numberWithFloat:16000.0], AVSampleRateKey,
+                                    [NSNumber numberWithInt: 1], AVNumberOfChannelsKey,
+                                    nil];
     
 //    NSString *pathToSave;
 //    if (path) {
@@ -85,16 +90,17 @@
     
     mayStop = NO;
     // Create recorder
-    recorder = [[AVAudioRecorder alloc] initWithURL:url settings:settings error:&error];
+    recorder = [[AVAudioRecorder alloc] initWithURL:url settings:recordSettings error:&error];
     if (error) {
-        NSLog(@"Error init recorder");
+        NSLog(@"Error init recorder %@", error);
+        return;
     }
     [recorder prepareToRecord];
     [recorder record];
     [self.delegate audioRecorderDidStartRecord:self];
 
+    [recorder setMeteringEnabled:YES];
     if (_autoPauseRecord) {
-        [recorder setMeteringEnabled:YES];
         updatePowerSignal = [NSTimer scheduledTimerWithTimeInterval:.5 target:self selector:@selector(updatePowerSignal:) userInfo:nil repeats:YES];
     }
 }
@@ -106,6 +112,10 @@
     _callback = completion;
     
     [self startRecordAtPath:path];
+}
+
+- (void)continueRecordAtPath:(NSString *)path {
+    NSLog(@"continueRecordAtPath %@", path);
 }
 
 - (void)updatePowerSignal:(NSTimer*)timer
@@ -142,6 +152,17 @@
     [recorder stop];
     
     return recorder.url;
+}
+
+#pragma mark - Base
+- (NSTimeInterval)currentTime {
+    return recorder.currentTime;
+}
+- (float)signalPower {
+    // power from ~ -60 to -5 db
+    float power = [recorder peakPowerForChannel:0];
+    
+    return 1.0 - ((-1*power - 5)*2)/100.0;
 }
 
 #pragma mark - Utils

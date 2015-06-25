@@ -22,7 +22,12 @@
 @property (atomic, retain) NSMutableArray * queue;
 @property (nonatomic) float                 speed;
 
-- (void)playFileAtPath:(NSString*)path;
-- (void)playFileFromData:(NSData *)data;
+- (void) playFileAtPath:(NSString*)path;
+- (void) playFileFromData:(NSData *)data;
+
+- (NSTimeInterval) pause;
+- (void) playAtTime:(NSTimeInterval)time;
+- (NSTimeInterval) currentTime;
+- (NSTimeInterval) duration;
 
 @end
