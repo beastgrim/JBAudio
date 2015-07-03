@@ -11,8 +11,7 @@
 @class JBAudioPlayer;
 @protocol JBAudioPlayerDelegate <NSObject>
 @optional
--(void)audioPlayerDidFinishPlaying:(JBAudioPlayer*)player;
-
+- (void) audioPlayerDidFinishPlaying:(JBAudioPlayer*)player;
 @end
 
 @interface JBAudioPlayer : NSObject
@@ -21,12 +20,17 @@
 
 @property (atomic, retain) NSMutableArray * queue;
 @property (nonatomic) float                 speed;
+@property (nonatomic) BOOL                  readyToPlay;
+
+- (NSTimeInterval) prepareFileAtPath:(NSString*)path;
+- (void) play;
 
 - (void) playFileAtPath:(NSString*)path;
 - (void) playFileFromData:(NSData *)data;
 
 - (NSTimeInterval) pause;
-- (void) playAtTime:(NSTimeInterval)time;
+- (void) playAtTime:(NSTimeInterval)time;   // seek and play
+- (void) seekToTime:(NSTimeInterval)time;   // seek to time
 - (NSTimeInterval) currentTime;
 - (NSTimeInterval) duration;
 

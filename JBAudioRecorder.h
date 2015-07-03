@@ -23,7 +23,7 @@
 typedef void (^JBAudioRecorderCallback)(NSURL * completion);
 
 @property (nonatomic, readonly) NSURL       *   defaultUrl;
-
+@property (nonatomic)           float           sampleRate;
 @property (nonatomic)           float           threshold;
 @property (nonatomic)           BOOL            autoPauseRecord;
 @property (nonatomic)           BOOL            autoStartRecord;
@@ -34,8 +34,8 @@ typedef void (^JBAudioRecorderCallback)(NSURL * completion);
 - (void) startRecordAtPath:(NSString*)path;
 - (void) startRecordAtPath:(NSString*)path autoCompletion:(void(^) (NSURL * url))completion;
 
-- (void) continueRecordAtPath:(NSString*)path;
-
+//- (BOOL) continueRecordAtPath:(NSString*)path time:(NSTimeInterval)time;
+- (BOOL) continueRecord;
 - (NSURL*) stopRecord;
-
+- (NSURL*) pauseRecord;
 @end

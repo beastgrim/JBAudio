@@ -34,6 +34,7 @@
 
     _autoPauseRecord = NO;
     _autoStartRecord = NO;
+    _sampleRate = 16000.0;
     
     return self;
 }
@@ -74,8 +75,9 @@
     // Recording m4a settings
     NSDictionary *recordSettings = [NSDictionary dictionaryWithObjectsAndKeys:
                                     [NSNumber numberWithInt: kAudioFormatMPEG4AAC], AVFormatIDKey,
-                                    [NSNumber numberWithFloat:16000.0], AVSampleRateKey,
+                                    [NSNumber numberWithFloat:_sampleRate], AVSampleRateKey,
                                     [NSNumber numberWithInt: 1], AVNumberOfChannelsKey,
+//                                    [NSNumber numberWithInt:128000], AVEncoderBitRateKey,
                                     nil];
     
 //    NSString *pathToSave;
@@ -114,8 +116,26 @@
     [self startRecordAtPath:path];
 }
 
-- (void)continueRecordAtPath:(NSString *)path {
-    NSLog(@"continueRecordAtPath %@", path);
+- (BOOL)continueRecordAtPath:(NSString *)path time:(NSTimeInterval)time {
+    if (recorder == nil) {
+        NSLog(@"continueRecordAtPath alloc recorder %@ time %.2f", path, time);
+
+        NSDictionary *recordSettings = [NSDictionary dictionaryWithObjectsAndKeys:
+                                        [NSNumber numberWithInt: kAudioFormatMPEG4AAC], AVFormatIDKey,
+                                        [NSNumber numberWithFloat:_sampleRate], AVSampleRateKey,
+                                        [NSNumber numberWithInt: 1], AVNumberOfChannelsKey,
+                                        nil];
+        NSError *error;
+        recorder = [[AVAudioRecorder alloc] initWithURL:[NSURL URLWithString:path] settings:recordSettings error:&error];
+        if (error) {
+            NSLog(@"Error continueRecordAtPath %@ %@", path, error);
+            return NO;
+        }
+        return [recorder recordAtTime:(recorder.deviceCurrentTime + time)];
+    } else {
+        NSLog(@"continueRecordAtPath used recorder %@ time %.2f", path, time);
+        return [recorder recordAtTime:(recorder.deviceCurrentTime + time)];
+    }
 }
 
 - (void)updatePowerSignal:(NSTimer*)timer
@@ -146,7 +166,20 @@
     }
 }
 
--(NSURL*)stopRecord
+- (BOOL) continueRecord {
+    [updatePowerSignal invalidate];
+    if (!recorder) return NO;
+    
+    return [recorder record];
+}
+- (NSURL*) pauseRecord
+{
+    [updatePowerSignal invalidate];
+    [recorder pause];
+    
+    return recorder.url;
+}
+- (NSURL*) stopRecord
 {
     [updatePowerSignal invalidate];
     [recorder stop];
@@ -159,10 +192,13 @@
     return recorder.currentTime;
 }
 - (float)signalPower {
-    // power from ~ -60 to -5 db
-    float power = [recorder peakPowerForChannel:0];
+    if (recorder && recorder.isRecording) {
+        // power from ~ -60 to -5 db
+        float power = [recorder peakPowerForChannel:0];
+        return 1.0 - ((-1*power - 5)*2)/100.0;
+    }
     
-    return 1.0 - ((-1*power - 5)*2)/100.0;
+    return 0.0;
 }
 
 #pragma mark - Utils
